@@ -1,0 +1,160 @@
+
+---
+title: "Synthetic Breast Cancer Data"
+subtitle: "STA 553 - Week 2"  
+author: 
+  - "Tim Kelleman"
+date: '`r Sys.Date()`'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:10
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#1381B0",
+  secondary_color = "#FF961C",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+
+#Table of Contents
+
+.pull-left[
+*   ####[Desciption of Data Set](#description)
+*   ####[Description of Data - PDF](#PDF)
+*   ####[Basic Details of Dataset in r (Summary)](#summary)
+*   ####[Summary of lm() Model](#lmmodel)
+*   ####[Correlation Matrix](#correlation)
+*   ####[Basic Scatter Plot](#scatterplot)
+*   ####[Density Chart](#density)
+*   ####[Interactive Data Set](#interactive)
+*   ####[Conclusion](#conclusion)
+]
+
+.pull-right[
+
+<center><img src="/Users/timothykelleman/Desktop/STA553/Week2HW/metastatic-breast-cancer.jpg" alt="Bone marrow infected with metastatic breast cancer tumor cells. - NIH" height="400px" /></center>
+]
+
+---
+name: description
+##Description of Data Set
+
+**Data Set Name:**
+
+Synthetic Breast Cancer Data (SBCD)
+
+**Number of Variables for SBCD:**
+
+11 (10 numerical and 1 categorical)
+
+**Source of Data Set:**
+
+Applied Analytics through Case Studies Using SAS and R - _Implementing Predictive Models and Machine Learning Techniques_
+
+**Author:** 
+
+Deepti Gupta
+---
+name:PDF
+###Description of SBCD - PDF
+
+<center><div class='wrap'>
+<object data="/Users/timothykelleman/Downloads/syntheticBreastCancerData-Description.pdf" type="application/pdf" width="80%" height="500px">
+      <p>Unable to display PDF file. <a href="/Users/timothykelleman/Downloads/syntheticBreastCancerData-Description.pdf">Download</a> instead.</p>
+    </object>
+</div></center>
+
+---
+name: summary
+## Basic Details of Synthetic Breast Cancer Dataset 
+```{r eval=TRUE}
+SBCD <- read.csv('/Users/timothykelleman/Downloads/syntheticBreastCancerData.csv')
+summary(SBCD)
+```
+
+---
+name: correlation
+###Correlation Matrix
+```{r eval=TRUE,out.width="100%", fig.align='center'}
+library(GGally)
+ggpairs(SBCD, columns = 2:10, aes(color=Outcome), upper = list(continuous = wrap("cor", size = 2)))
+```
+---
+name: lmmodel
+###Summary of lm() Model
+```{r eval=TRUE}
+summary(lm(SBCD$Cell_Size_Uniformity~SBCD$Bland_Chromatin, data = SBCD))
+```
+---
+name: scatterplot
+##Basic Scatter Plot
+.pull-left[
+```{r eval=TRUE, out.width="100%", fig.align='center'}
+library(ggplot2)
+plot(SBCD$Cell_Size_Uniformity, SBCD$Bland_Chromatin , main = "Regression Model of Cell Size Uniformity and Bland Chromatin", xlab = "Cell Size Uniformity", ylab = "Bland Chromatin",
+     pch = 1, frame = FALSE)
+
+abline(lm(SBCD$Cell_Size_Uniformity~SBCD$Bland_Chromatin, data = SBCD), col = "blue")
+```
+]
+.pull-right[
+```{r eval=TRUE, text_font_size = 8}
+lm(SBCD$Cell_Size_Uniformity~SBCD$Bland_Chromatin, data = SBCD)
+```
+
+]
+---
+name: density
+##Desnsity Chart
+```{r eval=TRUE, out.width="75%", fig.align='center'}
+library(ggplot2)
+library(geomtextpath)
+library(hrbrthemes)
+data(SBCD)
+
+p<-ggplot(SBCD, aes(x = Cell_Size_Uniformity, colour = Outcome, label = Outcome)) + geom_textdensity() + theme_bw() + guides(color = 'none')
+p<- p+ labs(title = "Cell Size Uniformity Density Plot", x = "Cell Size Uniformity")
+print(p)
+
+```
+
+---
+name: interactive
+##Interactive Data Table
+```{r eval=TRUE}
+DT::datatable(head(SBCD,8), fillContainer = FALSE, options = list(pageLength = 8))
+```
+
+---
+name: conclusion
+##Conclusion
+The `Bland_Chromatin` variable was chosen as the dependent variable since it was the most normally distributed of the continuous variable options. `Cell_Size_Uniformity` had the highest correlation with the `Bland_Chromatin` variable and was then assigned as the independent variable for the logistic regression model. 
+
+There is a correlation coeffient of .667 between the `Bland_Chromatin` and `Cell_Size_Uniformity` variables, signifying a strong correlation.
+
+With a p-value very close to o (2e-16), there is statistical significance to the observed difference
+
+
