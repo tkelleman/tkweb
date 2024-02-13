@@ -1,0 +1,106 @@
+
+---
+title: "STA 553 - Week 2"
+subtitle: "Penguin Data Set"  
+author: 
+  - "Tim Kelleman"
+date: '`r Sys.Date()`'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:10
+      countIncrementalSlides: true
+
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=4.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE
+)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(
+  primary_color = "#1381B0",
+  secondary_color = "#FF961C",
+  inverse_header_color = "#FFFFFF"
+)
+```
+
+```{r eval=TRUE, echo=FALSE}
+   library(tidyverse)
+   library(knitr)
+   library(png)
+   library(RCurl)
+   library(magick)
+   library(grDevices)
+   library(jpeg)
+
+#Import data set from Github and omit blank observations
+urlfile="https://tkelleman.github.io/tkweb/week3/w03-penguins.csv"
+pendata<-read.csv(url(urlfile))
+pendata_no_na <- na.omit(pendata)
+
+#Import image
+penguin.img <-"https://tkelleman.github.io/tkweb/week3/penguin.jpg"
+my.penguin <- readJPEG(getURLContent(penguin.img))
+raster.penguin <- as.raster(my.penguin)
+
+#Variables
+billLength = pendata_no_na$bill_length_mm
+flipperLength = pendata_no_na$flipper_length_mm
+species = pendata_no_na$species
+pointSize = (pendata_no_na$body_mass_g)/3000
+  
+#ID of species
+adelie.id = which(species=="Adelie")
+gentoo.id = which(species=="Gentoo")
+chinstrap.id = which(species=="Chinstrap")
+
+
+## Create Scatter plot (No points - Type "n")
+plot(
+  billLength, 
+  flipperLength, 
+  main = "Bill Length vs Flipper Length of Penguins", 
+  type = "n",   
+  xlab="Bill Length (mm)",  
+  ylab="Flipper Length (mm)",
+)
+
+## Plot Points
+points(billLength[adelie.id], flipperLength[adelie.id], pch = 19, col = "red", cex = pointSize[adelie.id])
+points(billLength[gentoo.id], flipperLength[gentoo.id], pch = 19, col = "blue", cex = pointSize[gentoo.id])
+points(billLength[chinstrap.id], flipperLength[chinstrap.id], pch = 19, col = "darkgreen", cex = pointSize[chinstrap.id])
+
+
+## Create Legend
+legend("topleft", c("Adelie", "Gentoo", "Chinstrap"), 
+       col=c("red", "blue", "darkgreen"),
+       pch=c(19, 19, 19))
+
+## Write Text
+text(54, 172, "**Point size is proportional to body mass in grams", col = "black", cex = .8)
+
+
+#Create Reg Line
+model<-lm(flipperLength ~ billLength)
+abline(model, lwd =2, col="black")
+
+#Display Image
+rasterImage(raster.penguin,35.1,214.4,40,233.1)
+
+```
+The figure above shows the positive correlation between `Bill Length` and `Flipper Length` for all three species (Adelie, Gentoo, and Chinstrap) in the Penguin data set. The point size is proportional to the `Body Mass (g)`. As `Bill Length` increases the `Flipper Length` also increases.
