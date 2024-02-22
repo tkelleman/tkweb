@@ -1,0 +1,105 @@
+---
+title: <span style="color:#1D3557"><Week 4 - Filtered Penguin Data</span>
+author: <span style="color:#1D3557">Tim Kelleman - STA 553 - 2/15/24</span>
+
+output:
+  html_document: 
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    fig_width: 8
+    fig_caption: yes
+    number_sections: yes
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: true
+    theme: readable
+   
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+    fig_width: 5
+    fig_height: 4
+  
+---
+<body style="background-color:#F1FAEE;">
+```{r eval=TRUE, echo=TRUE, message=FALSE}
+#Import Packages
+library(tidyverse)
+library(knitr)
+library(png)
+library(RCurl)
+library(magick)
+library(grDevices)
+library(jpeg)
+library(plotrix)
+
+
+#Import data set from Github and omit blank observations
+urlfile="https://tkelleman.github.io/tkweb/week3/w03-penguins.csv"
+pendata<-read.csv(url(urlfile))
+#A
+pendata_no_na <- na.omit(pendata)
+
+#Filter Data based on HW Requirements 
+#B
+PenData.Filter<- filter(pendata_no_na, ((species=="Adelie" | species=="Gentoo") & (island=="Biscoe" | island=="Torgersen")))
+#C
+PenData.Filter<- filter(PenData.Filter, (body_mass_g <5000 & body_mass_g >3500))
+#D
+PenData.Filter<- PenData.Filter %>%
+  mutate(BMI=body_mass_g/4000)
+#E
+drop<- c("X", "sex", "year", "body_mass_g")
+PenData.Filter=PenData.Filter[,!(names(PenData.Filter) %in% drop)]
+
+#Variables
+billLength = PenData.Filter$bill_length_mm
+flipperLength = PenData.Filter$flipper_length_mm
+species = PenData.Filter$species
+pointSize = PenData.Filter$BMI
+
+#ID of species
+adelie.id = which(species=="Adelie")
+gentoo.id = which(species=="Gentoo")
+
+## Plot Colors
+par(bg = "#F1FAEE", col.axis = "#1D3557", col.lab = "#1D3557")
+
+## Create Scatter plot (No points - Type "n")
+plot(
+  billLength, 
+  flipperLength, 
+  main = "Bill Length vs Flipper Length \n of Adelie and Gentoo Penguins", 
+  col.main=("#1D3557"),
+  type = "n",   
+  xlab="Bill Length (mm)",  
+  ylab="Flipper Length (mm)",
+)
+
+## Plot Points
+points(billLength[adelie.id], flipperLength[adelie.id], pch = 15, col = "#E63946", cex = pointSize[adelie.id])
+points(billLength[gentoo.id], flipperLength[gentoo.id], pch = 19, col = "#457B9D", cex = pointSize[gentoo.id])
+
+## Regression Line
+adelie.model<-lm(flipperLength[adelie.id] ~ billLength[adelie.id])
+abline(adelie.model, lwd =2, col="#E63946")
+
+gentoo.model<-lm(flipperLength[gentoo.id] ~ billLength[gentoo.id])
+abline(gentoo.model, lwd =2, col="#457B9D")
+
+
+## Create Legend
+legend("topleft", c("Adelie", "Gentoo"), 
+       col=c("#E63946", "#457B9D"),
+       pch=c(15, 19))
+
+draw.circle(x=44.10, y =209.9, radius=.25)
+
+```
+<span style="color:#1D3557">The figure above shows the relationship between the bill length and flipper length of the Adelie and Gentoo penguin species in the data set. This data set was filtered to only include complete observations of penguins between 3500g and 5000g body mass from the Biscoe and Torgersten islands. As shown by this plot, both species have a positive correlation between bill length and flipper length, with the Adelie species having a slightly more positive relationship. There is one notable outlier data point of the Adelie penguin species, noted by the circled point on the figure. 
+
+</span>
