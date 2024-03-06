@@ -1,0 +1,298 @@
+---
+title: "Week 6 - Interactive Plots with Plotly()"
+author: "Tim Kelleman"
+date: "2024-02-29"
+
+output:
+  html_document: 
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    fig_width: 8
+    fig_caption: yes
+    number_sections: yes
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: true
+    theme: readable
+   
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+    fig_width: 5
+    fig_height: 4
+---
+
+```{=html}
+<style type="text/css">
+
+div#TOC li {
+    list-style:none;
+    background-color:lightgray;
+    background-image:none;
+    background-repeat:none;
+    background-position:0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #780c0c;
+}
+
+/* mouse over link */
+div#TOC a:hover {
+  color: red;
+}
+
+/* unvisited link */
+div#TOC a:link {
+  color: blue;
+}
+
+
+
+h1.title {
+  font-size: 24px;
+  color: Darkblue;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-variant-caps: normal;
+}
+h4.author { 
+    font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+h4.date { 
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+h1 {
+    font-size: 24px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+h2 {
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { 
+    font-size: 15px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+/* unvisited link */
+a:link {
+  color: green;
+}
+
+/* visited link */
+a:visited {
+  color: green;
+}
+
+/* mouse over link */
+a:hover {
+  color: red;
+}
+
+/* selected link */
+a:active {
+  color: yellow;
+}
+</style>
+```
+---
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+options(repos = list(CRAN="http://cran.rstudio.com/"))
+if (!require("tidyverse")) {
+   install.packages("tidyverse")
+   library(tidyverse)
+}
+if (!require("knitr")) {
+   install.packages("knitr")
+   library(knitr)
+}
+if (!require("cowplot")) {
+   install.packages("cowplot")
+   library(cowplot)
+}
+if (!require("latex2exp")) {
+   install.packages("latex2exp")
+   library(latex2exp)
+}
+if (!require("plotly")) {
+   install.packages("plotly")
+   library(plotly)
+}
+if (!require("gapminder")) {
+   install.packages("gapminder")
+   library(gapminder)
+}
+if (!require("png")) {
+    install.packages("png")             # Install png package
+    library("png")
+}
+if (!require("RCurl")) {
+    install.packages("RCurl")           # Install RCurl package
+    library("RCurl")
+}
+if (!require("colourpicker")) {
+    install.packages("colourpicker")              
+    library("colourpicker")
+}
+if (!require("gifski")) {
+    install.packages("gifski")              
+    library("gifski")
+}
+if (!require("magick")) {
+    install.packages("magick")              
+    library("magick")
+}
+if (!require("grDevices")) {
+    install.packages("grDevices")              
+    library("grDevices")
+}
+### ggplot and extensions
+if (!require("ggplot2")) {
+    install.packages("ggplot2")              
+    library("ggplot2")
+}
+if (!require("gganimate")) {
+    install.packages("gganimate")              
+    library("gganimate")
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")              
+    library("ggridges")
+}
+if (!require("graphics")) {
+    install.packages("graphics")              
+    library("graphics")
+}
+if (!require("dplyr")) {
+    install.packages("dplyr")              
+    library("dplyr")
+}
+
+
+knitr::opts_chunk$set(echo = TRUE,       
+                      warning = FALSE,   
+                      result = TRUE,   
+                      message = FALSE,
+                      comment = NA)
+```
+
+```{r eval=TRUE}
+#Import data
+Countries<- read.csv("https://tkelleman.github.io/tkweb/Week5/countries_total.csv")
+Income<-read.csv("https://tkelleman.github.io/tkweb/Week5/income_per_person.csv")
+LifeExp<-read.csv("https://tkelleman.github.io/tkweb/Week5/life_expectancy_years.csv")
+Population<-read.csv("https://tkelleman.github.io/tkweb/Week5/population_total.csv")
+
+## A - Reshape data set: Income Per Person to make a longitudinal data such that the resulting data set has three columns: country, year, and income.
+IncomeEdit <- Income %>%
+  gather(key = "Year", value = "Income", - geo, na.rm=TRUE)
+names(IncomeEdit)[1] <- "Country"
+
+## B - Do the same for Life Expectancy in Years so that the resulting data set has three columns: country, year, and life expectancy.
+LifeExpEdit <- LifeExp %>%
+  gather(key = "Year", value = "LifeExpectancy", - geo, na.rm=TRUE)
+names(LifeExpEdit)[1] <- "Country"
+
+## C -  Merge/join the above two longitudinal data sets to make a new data set, under name LifeExpIncom that has variables: country, year, lifeExp, and income.
+LifeExpIncom <- merge(IncomeEdit, LifeExpEdit, by = c("Country", "Year"))
+
+## D - Merge LifeExpIncom with country region so that the final data set has information about income, life expectancy, and country region.
+LifeIncomCount <-merge(LifeExpIncom, Countries, by.x = "Country", by.y = "name", all.x = TRUE)
+
+## E -  Merge the previous resulting data set with population size so that the final data set has information about income, life expectancy, population size, and country region.
+PopulationEdit <- Population %>%
+  gather(key = "Year", value = "Population", - geo, na.rm=TRUE)
+names(PopulationEdit)[1] <- "Country"
+
+FinalData <- merge(LifeIncomCount, PopulationEdit, by = c("Country", "Year"))
+FinalData <- subset(FinalData, select = -c(alpha.2, alpha.3, country.code, iso_3166.2, sub.region, region.code, sub.region.code, intermediate.region.code, intermediate.region))
+FinalData$Year<-gsub("X","", as.character(FinalData$Year))
+
+#write.csv(FinalData, "FinalData.csv")
+
+## 3 Create a subset of the above resulting longitudinal data set that contains only the data of the year 2000/font> - name it 2000data.
+Y2000data<-filter(FinalData, Year==2000)
+
+#Y2000data contains 187 observations of 6 variables
+#FinalData contains 40,437 observations of 6 variables
+
+```
+<br>
+Each of the four data sets CSV files (_countries_total_, _income_per_person_, _life_expectancy_years_, and _population_total_) were imported into R for data preparation. Exact steps of the data preparation are documented in the comments in the code above, press “show” button. _income_per_person_ and _life_expectancy_years_ were reshaped from latitudinal to longitudinal to only include the columns: “country”, “year”, and “life expectancy” and merged into one data set. This data set was then merged into a “FinalData” dataset that included _countries_total_ and _population_total_ formatted to only include information about income, life expectancy, population size, and country region.
+```{r eval=TRUE}
+Y2015data<-filter(FinalData, Year==2015)
+#Y2015data<-formatC(Y2015data$Population, format = "d", big.mark = ",")
+plot2015<-plot_ly(
+      data = Y2015data,
+      x=~Income, 
+      y=~LifeExpectancy, 
+      alpha = 0.8,
+      size = ~Population, 
+      color = ~Country,
+      width = 2,
+      frame = ~Year,
+      text = ~paste("Country:", Country,
+                    "<br>Life Expectancy:", LifeExpectancy,
+                    "<br>Population:", Population),
+      hoverinfo = "text",
+      type = "scatter",
+      mode = "markers"
+)%>%
+layout(
+  title =list(text = "Interactive Plot of Life Expectancy by Income in 2015", 
+                  font = list(family = "Times New Roman",
+                                size = 18,
+                               color = "black"))
+  )
+plot2015
+```
+
+<br>
+Figure 1: Interactive Plot of Life Expectancy by Income in 2015 <br> <br>  This interactive plot shows the relationship between life expectancy and income in the year 2015 in the merged data set. The population of each country is represented by the diameter of the points plotted and the color of the point represents the country. As shown in this figure, countries in the regions of Americas and Europe have a higher life expectancy than most countries in the Africa region, with a few outlier data points. As each point is selected, the country, life expectancy, and population is displayed.
+```{r eval=TRUE}
+### Full Data Set
+cols1 = c("#332288","#117733","#44AA99","#88CCEE","#DDCC77","#CC6677")
+AllDataPlot<-ggplot(FinalData, aes(x=Income, 
+                      y=LifeExpectancy, 
+                      size = Population, 
+                      color = region)) +
+  geom_point(aes(size=Population, ids = Country),
+            show.legend = TRUE,
+            alpha = 0.8)+
+            scale_color_manual(values = cols1)+
+    labs(title = 'Plot of Life Expectency by Income at Year: {closest_state}',
+       x = 'Income',
+       y = 'Life Expectancy',
+       fill =  'Region')+
+    transition_states(Year) +
+    ease_aes('linear')
+
+animate(AllDataPlot, renderer = gifski_renderer(), rewind = FALSE, nframes = 300, fps = 10)
+```
+<br>
+Figure 2: Plot of Life Expectancy by Income for Years 1800-2018 <br> <br>  This plot shows the relationship between life expectancy and income all countries in the merged data set. The population of each country is represented by the diameter of the points plotted and the color of the point represents the region of the country. As shown in the plot, all represented countries increase their life expectancy between the given years but not all countries show an increase in income. 
