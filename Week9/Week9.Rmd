@@ -1,0 +1,277 @@
+---
+title: "Week 9 - Interactive Visualization with Tableau"
+author: "Tim Kelleman"
+date: "2024-04-3"
+
+output:
+  html_document: 
+    toc: no
+    toc_depth: 4
+    toc_float: yes
+    fig_width: 8
+    fig_caption: yes
+    number_sections: yes
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: true
+    theme: readable
+   
+  pdf_document: 
+    toc: no
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+    fig_width: 5
+    fig_height: 4
+---
+
+```{=html}
+<style type="text/css">
+
+div#TOC li {
+    list-style:none;
+    background-color:lightgray;
+    background-image:none;
+    background-repeat:none;
+    background-position:0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #780c0c;
+}
+
+/* mouse over link */
+div#TOC a:hover {
+  color: red;
+}
+
+/* unvisited link */
+div#TOC a:link {
+  color: blue;
+}
+
+h1.title {
+  font-size: 24px;
+  color: Darkblue;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-variant-caps: normal;
+}
+h4.author { 
+    font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+h4.date { 
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+h1 {
+    font-size: 24px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+h2 {
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { 
+    font-size: 15px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+/* unvisited link */
+a:link {
+  color: green;
+}
+
+/* visited link */
+a:visited {
+  color: green;
+}
+
+/* mouse over link */
+a:hover {
+  color: red;
+}
+
+/* selected link */
+a:active {
+  color: yellow;
+}
+</style>
+```
+---
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+options(repos = list(CRAN="http://cran.rstudio.com/"))
+if (!require("tidyverse")) {
+   install.packages("tidyverse")
+   library(tidyverse)
+}
+if (!require("knitr")) {
+   install.packages("knitr")
+   library(knitr)
+}
+if (!require("cowplot")) {
+   install.packages("cowplot")
+   library(cowplot)
+}
+if (!require("latex2exp")) {
+   install.packages("latex2exp")
+   library(latex2exp)
+}
+if (!require("plotly")) {
+   install.packages("plotly")
+   library(plotly)
+}
+if (!require("gapminder")) {
+   install.packages("gapminder")
+   library(gapminder)
+}
+if (!require("png")) {
+    install.packages("png")             # Install png package
+    library("png")
+}
+if (!require("RCurl")) {
+    install.packages("RCurl")           # Install RCurl package
+    library("RCurl")
+}
+if (!require("colourpicker")) {
+    install.packages("colourpicker")              
+    library("colourpicker")
+}
+if (!require("gifski")) {
+    install.packages("gifski")              
+    library("gifski")
+}
+if (!require("magick")) {
+    install.packages("magick")              
+    library("magick")
+}
+if (!require("grDevices")) {
+    install.packages("grDevices")              
+    library("grDevices")
+}
+### ggplot and extensions
+if (!require("ggplot2")) {
+    install.packages("ggplot2")              
+    library("ggplot2")
+}
+if (!require("gganimate")) {
+    install.packages("gganimate")              
+    library("gganimate")
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")              
+    library("ggridges")
+}
+if (!require("graphics")) {
+    install.packages("graphics")              
+    library("graphics")
+}
+if (!require("dplyr")) {
+    install.packages("dplyr")              
+    library("dplyr")
+}
+if (!require("lubridate")) {
+    install.packages("lubridate")              
+    library("lubridate")
+}
+if (!require("tmap")) {
+    install.packages("tmap")              
+    library("tmap")
+}
+if (!require("sf")) {
+    install.packages("sf")              
+    library("sf")
+}
+
+if (!require("leaflet")) {
+    install.packages("leaflet")              
+    library("leaflet")
+}
+if (!require("leafpop")) {
+    install.packages("leafpop")              
+    library("leafpop")
+}
+if (!require("htmltools")) {
+    install.packages("htmltools")              
+    library("htmltools")
+}
+
+knitr::opts_chunk$set(echo = TRUE,       
+                      warning = FALSE,   
+                      result = TRUE,   
+                      message = FALSE,
+                      comment = NA)
+```
+# Importing and Filtering Data
+The code below performs the following steps on U.S. Presidential Election data from 2000 to 2020: It reads the data, ensuring no missing values are present, and formats the county FIPS codes with leading zeros to maintain standardization. It filters the dataset to include only the major parties, Democrat and Republican, and calculates the vote percentage to two decimal points for each candidate. The data is then grouped by state, county, and year for organized analysis. Within each group, the entry with the highest vote percentage is selected, indicating the winning party in each county. For the state election data,  groups of the data by year, state, and party are created to calculate the sum of candidatevotes and totalvotes for each group. Then, it adds a new column percentage to store the percentage of votes each party received within a state for a given year. The data is filtered to identify the winning party for each state and year combination, defined as the party with the maximum percentage of votes. The data is exported to two new CSV files for visualization. Each step is executed to transform the raw data into insightful information that reveals electoral trends over the twenty-year period.
+```{r eval=TRUE}
+#Read the Presidential Election 2000 to 2020 data
+electionData <- na.omit(read.csv("https://tkelleman.github.io/tkweb/Week9/PresidentialElection2000To2020.csv"))
+electionData$county_fips <- sprintf("%05d", as.numeric(electionData$county_fips))
+electionData$county_fips <- as.character(electionData$county_fips)
+ 
+#Question 2A 
+#Filter to only include Democrat and Republican and create a votePercentage variable with 2 decimal points
+electionData <- filter(electionData, party == "DEMOCRAT" | party == "REPUBLICAN") %>%
+mutate(votePercent = round((candidatevotes/totalvotes)*100, 2))
+
+#Group Data by state_po and county_fips, year
+groupedData <- group_by(electionData, state_po, county_fips, year)
+
+#Use slice to keep only the row with the highest votePercent within each group
+electionDataHighest <- groupedData %>%
+  slice(which.max(votePercent))
+
+#Export CSV
+write.csv(electionDataHighest, "ElectionDataHighest.csv", row.names = FALSE)
+
+# Question 2B
+electionData <- electionData %>%
+  group_by(year, state, party) %>%
+  summarise(candidatevotes = sum(candidatevotes), totalvotes = sum(totalvotes)) %>%
+  mutate(percentage = (candidatevotes / totalvotes) * 100) %>%
+  ungroup()
+
+# Filter for the winning party in each state
+winningParties <- electionData %>%
+  group_by(year, state) %>%
+  filter(percentage == max(percentage)) %>%
+  ungroup()
+write.csv(winningParties, "ElectionDataState.csv", row.names = FALSE)
+
+```
+
+
+# US Presidental Election Winner by County (2000-2020) - Tableau Interactive Map
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+knitr::include_url("https://public.tableau.com/views/USPresidentialElectionWinnerbyCounty2000-2020/Sheet1?:embed=y&:showVizHome=no&:host_url=https%3A%2F%2Fpublic.tableau.com%2F&:embed_code_version=3&:tabs=no&:toolbar=yes&:animate_transition=yes&:display_static_image=no&:display_spinner=no&:display_overlay=yes&:display_count=yes&:language=en-US&publish=yes&:loadOrderID=0&:increment_view_count=no#1", height = "500px")
+```
+
+This interactive choropleth map allows users to select U.S. Presidential election years from 2000 to 2020 to view the winning candidates by county. By hovering over the map, users can access details such as the year, state, county, winning party, winning candidate, vote percentage, and total votes. The map also enables users to compare different election cycles to identify counties that have switched parties. Incorporating additional data, like median salary and demographics, could provide deeper insights into the trends influencing electoral outcomes.
+
+# US Presidental Election Winner by State (2000-2020) - Tableau Interactive Map
+```{r, echo=FALSE, results='asis'}
+knitr::include_url("https://public.tableau.com/views/USPresidentalElectionWinnerbyState2000-2020/Sheet1?:embed=y&:showVizHome=no&:host_url=https%3A%2F%2Fpublic.tableau.com%2F&:embed_code_version=3&:tabs=no&:toolbar=yes&:animate_transition=yes&:display_static_image=no&:display_spinner=no&:display_overlay=yes&:display_count=yes&:language=en-US&publish=yes", height = "500px")
+```
+This interactive choropleth map allows users to select U.S. Presidential election years from 2000 to 2020 to view the winning candidates by State By hovering over the map, users can access details such as the year, state, winning party, vote percentage, and total votes. The map also enables users to compare different election cycles to identify states that have switched parties. 
