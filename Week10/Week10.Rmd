@@ -1,0 +1,350 @@
+---
+title: "Week 10 - Tableau Dashboards"
+author: "Tim Kelleman"
+date: "2024-04-3"
+output:
+  html_document: 
+    toc: no
+    toc_depth: 4
+    toc_float: yes
+    fig_width: 8
+    fig_caption: yes
+    number_sections: yes
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: true
+    theme: readable
+   
+  pdf_document: 
+    toc: no
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+    fig_width: 5
+    fig_height: 4
+---
+
+```{=html}
+<style type="text/css">
+
+div#TOC li {
+    list-style:none;
+    background-color:lightgray;
+    background-image:none;
+    background-repeat:none;
+    background-position:0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #780c0c;
+}
+
+/* mouse over link */
+div#TOC a:hover {
+  color: red;
+}
+
+/* unvisited link */
+div#TOC a:link {
+  color: blue;
+}
+
+h1.title {
+  font-size: 24px;
+  color: Darkblue;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-variant-caps: normal;
+}
+h4.author { 
+    font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+h4.date { 
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+h1 {
+    font-size: 24px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+h2 {
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { 
+    font-size: 15px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+/* unvisited link */
+a:link {
+  color: green;
+}
+
+/* visited link */
+a:visited {
+  color: green;
+}
+
+/* mouse over link */
+a:hover {
+  color: red;
+}
+
+/* selected link */
+a:active {
+  color: yellow;
+}
+</style>
+```
+---
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+options(repos = list(CRAN="http://cran.rstudio.com/"))
+if (!require("tidyverse")) {
+   install.packages("tidyverse")
+   library(tidyverse)
+}
+if (!require("knitr")) {
+   install.packages("knitr")
+   library(knitr)
+}
+if (!require("cowplot")) {
+   install.packages("cowplot")
+   library(cowplot)
+}
+if (!require("latex2exp")) {
+   install.packages("latex2exp")
+   library(latex2exp)
+}
+if (!require("plotly")) {
+   install.packages("plotly")
+   library(plotly)
+}
+if (!require("gapminder")) {
+   install.packages("gapminder")
+   library(gapminder)
+}
+if (!require("png")) {
+    install.packages("png")             # Install png package
+    library("png")
+}
+if (!require("RCurl")) {
+    install.packages("RCurl")           # Install RCurl package
+    library("RCurl")
+}
+if (!require("colourpicker")) {
+    install.packages("colourpicker")              
+    library("colourpicker")
+}
+if (!require("gifski")) {
+    install.packages("gifski")              
+    library("gifski")
+}
+if (!require("magick")) {
+    install.packages("magick")              
+    library("magick")
+}
+if (!require("grDevices")) {
+    install.packages("grDevices")              
+    library("grDevices")
+}
+### ggplot and extensions
+if (!require("ggplot2")) {
+    install.packages("ggplot2")              
+    library("ggplot2")
+}
+if (!require("gganimate")) {
+    install.packages("gganimate")              
+    library("gganimate")
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")              
+    library("ggridges")
+}
+if (!require("graphics")) {
+    install.packages("graphics")              
+    library("graphics")
+}
+if (!require("dplyr")) {
+    install.packages("dplyr")              
+    library("dplyr")
+}
+if (!require("lubridate")) {
+    install.packages("lubridate")              
+    library("lubridate")
+}
+if (!require("tmap")) {
+    install.packages("tmap")              
+    library("tmap")
+}
+if (!require("sf")) {
+    install.packages("sf")              
+    library("sf")
+}
+
+if (!require("leaflet")) {
+    install.packages("leaflet")              
+    library("leaflet")
+}
+if (!require("leafpop")) {
+    install.packages("leafpop")              
+    library("leafpop")
+}
+if (!require("htmltools")) {
+    install.packages("htmltools")              
+    library("htmltools")
+}
+
+knitr::opts_chunk$set(echo = TRUE,       
+                      warning = FALSE,   
+                      result = TRUE,   
+                      message = FALSE,
+                      comment = NA)
+```
+# Neonicotinoids Background
+Neonicotinoids, often referred to as “neonics”, are a class of synthetic, neurotoxic insecticides that are widely used on agricultural crops, lawns, gardens, and in pet treatments. They work by permanently binding to the nerve cells of insects, overstimulating and destroying them. However, their impact extends beyond the targeted pests. Studies have shown that neonicotinoids can have acute and sub-lethal effects on honey bees, including limited reproductive rates, impaired foraging abilities, increased susceptibility to disease, and decreased learning abilities. Chronic exposure to neonicotinoids has been linked to significant harm to honey bee colonies, particularly during colder winters. This exposure can lead to Colony Collapse Disorder (CCD), a phenomenon where bees abandon their hives over the winter and eventually die. The decline in honey bee populations due to neonicotinoids poses a serious threat to ecosystem health and food security, given the crucial role bees play as pollinators.
+<br>
+Citations: Effects of Neonicotinoids on Humans and Bees - NRDC.ORG
+
+# Data Source
+Honey Bees and Neonicotinoids Pesticides 
+<ul>
+<li>Kaggle Link: https://www.kaggle.com/datasets/kevinzmith/honey-with-neonic-pesticide/data
+<li>Original Data: Collected by USDA and USGA
+</ul>
+
+From USDA Data: <br>
+<ul>
+  <li>numcol: Number of honey producing colonies. Honey producing colonies are the maximum number of colonies from which honey was taken during the year. It is possible to take honey from colonies which did not survive the entire year <br>
+  <li>yieldpercol: Honey yield per colony. Unit is pounds <br>
+  <li>totalprod: Total production (numcol x yieldpercol). Unit is pounds <br>
+  <li>stocks: Refers to stocks held by producers. Unit is pounds <br>
+  <li>priceperlb: Refers to average price per pound based on expanded sales. Unit is dollars. <br>
+  <li>prodvalue: Value of production (totalprod x priceperlb). Unit is dollars. <br>
+    <br>
+ </ul>
+From USGS Data: <br>
+<ul>
+  <li>nCLOTHIANIDIN: The amount in kg of Clothianidin applied <br>
+  <li>nIMIDACLOPRID: The amount in kg of Imidacloprid applied <br>
+  <li>nTHIAMETHOXAM: The amount in kg of Thiamethoxam applied <br>
+  <li>nACETAMIPRID: The amount in kg of Acetamiprid applied <br>
+  <li>nTHIACLOPRID: The amount in kg of Thiacloprid applied <br>
+  <li>nAllNeonic: The amount in kg of all Neonics applied = (nCLOTHIANIDIN + nIMIDACLOPRID + nTHIAMETHOXAM + nACETAMIPRID + nTHIACLOPRID) <br>
+</ul>
+Dataset is missing all values for New Hampshire, Massachusetts, Connecticut, and Rhode Island. Data set is also missing values for Maryland, Delaware, South Carolina, Oklahoma, Nevada, and New Mexico for select years.
+```{r eval=TRUE}
+
+#import data
+beeData <- na.omit(read.csv("https://tkelleman.github.io/tkweb/Week10/vHoneyNeonic_v02.csv"))
+
+#Create column lowNeonic showing "low" for if values in nAllNeonic is less than 1000, between 1000-10,000 as "moderate", and greater than 10,000 as  "high"
+beeData <- beeData %>%
+  mutate(catNeonic = case_when(
+    nAllNeonic < 1000 ~ "low",
+    nAllNeonic >= 1000 & nAllNeonic <= 10000 ~ "moderate",
+    nAllNeonic > 10000 ~ "high"
+  ))
+
+summary(beeData)
+
+#Save data as CSV file
+write.csv(beeData, "beeDataUpdated.csv", row.names = FALSE)
+```
+# Data Summary
+Minimal data manipulation was performed. Incomplete observations were removed using the na.omit and a new column (catNeonic) was genertated categorizing the nAllNeonic values into “low” (less than 1000), “moderate” (between 1000 and 10000, inclusive), and “high” (greater than 10000). The final dataset included 761 observations of 17 variables. 
+
+# Tableau Dashboard
+<table border = 0 bordercolor="black" bgcolor='#f6f6f6'  width=100%  align = center>
+<tr>
+<td>
+<div class='tableauPlaceholder' id='viz1712798727572' style='position: relative'>
+<noscript>
+<a href='#'><img alt='Dashboard 1 ' src='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;We&#47;Week10-T_Kelleman&#47;Dashboard1&#47;1_rss.png' style='border: none' /></a>
+</noscript>
+<object class='tableauViz'  style='display:none;'>
+<param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' /> 
+<param name='embed_code_version' value='3' /> 
+<param name='path' value='views&#47;Week10-T_Kelleman&#47;Dashboard1?:language=en-US&amp;:embed=true&amp;publish=yes&amp;:sid=' /> 
+<param name='toolbar' value='yes' /><param name='static_image' value='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;We&#47;Week10-T_Kelleman&#47;Dashboard1&#47;1.png' /> 
+<param name='animate_transition' value='yes' /><param name='display_static_image' value='yes' /><param name='display_spinner' value='yes' />
+<param name='display_overlay' value='yes' /><param name='display_count' value='yes' />
+<param name='language' value='en-US' />
+<param name='filter' value='publish=yes' />
+</object></div>                
+
+<script type='text/javascript'>                    
+var divElement = document.getElementById('viz1712798727572');                    
+var vizElement = divElement.getElementsByTagName('object')[0];                    
+vizElement.style.minWidth='1120px';
+vizElement.style.maxWidth='1420px';
+vizElement.style.width='100%';
+vizElement.style.minHeight='587px';
+vizElement.style.maxHeight='887px';
+vizElement.style.height=(divElement.offsetWidth*0.75)+'px';                    
+var scriptElement = document.createElement('script');                    
+scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';                    
+vizElement.parentNode.insertBefore(scriptElement, vizElement);               
+</script>
+</td>
+</tr>
+</table>
+
+<br>
+
+# Conclusions from Tableau Dashboard
+Using the Filter - State Name in the bottom right corner users can select all, one, or multiple states to filter charts. General trends visible in the data are a steady increase in neonicotinoid usage until ~2014 and a sudden drop in usage, due to Federal regulation changes. There is a wide variety in usage of all neonicotinoids by state as shown in the map with some states adopting this policy earlier than others. More recent data points could shed light on the economic impact of decreased use of these pesticides. Data like this drives EPA policy on best practices for agriculture to reduce the harm to native species while maintaining crop yields.
+
+# Storyboard Version
+<table border = 0 bordercolor="black" bgcolor='#f6f6f6'  width=100%  align = center>
+<tr>
+<td>
+<div class='tableauPlaceholder' id='viz1712802939492' style='position: relative'>
+<noscript>
+<a href='#'><img alt='Neonicotinoids Pesticide Use in the US and its Impact on Impact on Honey Production ' src='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;ZM&#47;ZMRJ3WMS2&#47;1_rss.png' style='border: none' /></a>
+</noscript>
+<object class='tableauViz'  style='display:none;'>
+<param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' /> 
+<param name='embed_code_version' value='3' /> 
+<param name='path' value='shared&#47;ZMRJ3WMS2' /> 
+<param name='toolbar' value='yes' />
+<param name='static_image' value='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;ZM&#47;ZMRJ3WMS2&#47;1.png' /> 
+<param name='animate_transition' value='yes' /><param name='display_static_image' value='yes' />
+<param name='display_spinner' value='yes' />
+<param name='display_overlay' value='yes' />
+<param name='display_count' value='yes' />
+<param name='language' value='en-US' />
+<param name='filter' value='publish=yes' />
+</object></div>                
+
+<script type='text/javascript'>                    
+var divElement = document.getElementById('viz1712802939492');                    
+var vizElement = divElement.getElementsByTagName('object')[0];                    
+vizElement.style.width='1016px';vizElement.style.height='991px';                    
+var scriptElement = document.createElement('script');                    
+scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';                    
+vizElement.parentNode.insertBefore(scriptElement, vizElement);               
+</script>
+</td>
+</tr>
+</table>
