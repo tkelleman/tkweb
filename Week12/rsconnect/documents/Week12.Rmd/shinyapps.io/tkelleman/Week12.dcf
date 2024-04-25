@@ -1,0 +1,12 @@
+name: Week12
+title: Week12
+username: tkelleman
+account: tkelleman
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 11857696
+bundleId: 8538388
+url: https://tkelleman.shinyapps.io/Week12/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
