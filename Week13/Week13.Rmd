@@ -1,0 +1,236 @@
+---
+title: "Week 13 - R Shiny Flashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: default
+    orientation: columns
+    vertical_layout: fill
+    runtime: shiny
+---
+<style type="text/css">
+/* Get a fancy font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap');
+
+body {
+  background-color: lightgray;
+  color: RoyalBlue; /* text color */
+  text-align: left;
+}
+
+.navbar {
+	position: fixed;
+	display: flex;
+	justify-content: center;
+	width: 100%;
+}
+
+/* Make text visible on inputs */
+.shiny-input-container {
+  color: RoyalBlue;
+}
+
+.navbg {
+  background-color: lightgrey;
+  color: black;
+}
+
+</style>                    
+
+\
+```{r setup, include=FALSE}
+if (!require("flexdashboard")) {
+   install.packages("flexdashboard")
+   library(flexdashboard)
+}
+if (!require("shiny")) {
+   install.packages("shiny")
+   library(shiny)
+}
+if (!require("plotly")) {
+   install.packages("plotly")
+   library(plotly)
+}
+if (!require("ggplot2")) {
+   install.packages("ggplot2")
+   library(ggplot2)
+}
+if (!require("tidyverse")) {
+   install.packages("tidyverse")
+   library(tidyverse)
+}
+if (!require("ggcorrplot")) {
+   install.packages("ggcorrplot")
+   library(ggcorrplot)
+}
+if (!require("ggridges")) {
+   install.packages("ggridges")
+   library(ggridges) 
+}
+if (!require("DT")) {
+   install.packages("DT")
+   library(DT) 
+}
+```
+
+
+```{r data}
+##Data Import and Filter
+penguinData <- na.omit(read.csv("https://tkelleman.github.io/tkweb/week3/w03-penguins.csv"))
+x.names = names(penguinData)[4:7]
+y.names = names(penguinData)[4:7]
+```
+Column {.sidebar .navbg data-width=200}
+-----------------------------------------------------------------------
+<br><br>
+
+```{r}
+                radioButtons(inputId = "species",
+                              label = "Species",
+                              choices = c("Adelie",
+                                          "Gentoo",
+                                          "Chinstrap",
+                                          "All"),
+                              inline = FALSE,
+                              selected = "All")
+```
+<hr>
+```{r}
+                selectInput(inputId = "Y",
+                             label = "Response Variable: Y",
+                             choices = y.names)
+                 
+                 selectInput(inputId = "X",
+                             label =  "Predictor Variable: X",
+                             choices = x.names,
+                             selected = x.names[2])
+```
+<hr>
+```{r}    
+                 sliderInput(inputId = "newX", 
+                             label = "New Value for Prediction:", 
+                             value = 2.5, 
+                             min = 0, 
+                             max = 250, 
+                             step = 0.1)
+```
+<hr>
+
+
+```{r}
+workDat = function(){
+    if (input$species == "Adelie") {
+      workingData = penguinData[which(penguinData$species == "Adelie"),]
+    } else if (input$species == "Gentoo") {
+      workingData = penguinData[which(penguinData$species == "Gentoo"),]
+    } else if (input$species == "Chinstrap") {
+      workingData = penguinData[which(penguinData$species == "Chinstrap"),]
+    } else {
+      workingData = penguinData
+    }
+    workingData 
+  }
+```
+
+Column {data-width=450  .tabset .tabset-pills} 
+-------------------------------------------------------------------
+### **Scatter Plot**
+```{r}
+## Scatter Plot
+renderPlot({
+  dataset = workDat()[,-1]
+  
+  ggplot(dataset, aes_string(x=input$X, y=input$Y)) +
+    geom_point(aes(color = species)) +
+    geom_smooth(method = "lm", se = FALSE, color = "#e63946", size = 2) +
+    labs(x = input$X, y = input$Y, title = paste("Relationship between", input$Y, "and", input$X)) +
+    theme_minimal(base_family = "Arial") +
+    theme(plot.background = element_rect(fill = "#ffffff"))+
+    scale_color_manual(values = c("Adelie" = "#1b9e77", "Gentoo" = "#d95f02", "Chinstrap" = "#7570b3"))
+})
+```
+### **Regression Coefficients**
+```{r}
+## Regression Coefficients
+renderTable({
+    br()
+    br()
+    dataset = workDat()[,-1]
+    m0 = lm(dataset[,input$Y] ~ dataset[,input$X])
+    regcoef = data.frame(coef(summary(m0)))
+    regcoef$Pvalue = regcoef[,names(regcoef)[4]]
+    regcoef$Variable = c("Intercept", input$X)
+    regcoef[,c(6, 1:3, 5)]
+    
+  })
+``` 
+### **Diagnostics**
+```{r}
+  ## Diagnostics
+renderPlot({
+    par(bg="#ffffff")
+    dataset = workDat()[,-1]
+    m1=lm(dataset[,input$Y] ~ dataset[,input$X])
+    par(mfrow=c(2,2))
+    plot(m1)
+  })   
+```
+### **Prediction**
+```{r}
+  ## Prediction
+renderPlot({
+    par(bg="#ffffff")
+    dataset = workDat()[,-1]
+    m3 = lm(dataset[,input$Y] ~ dataset[,input$X])
+    pred.y = coef(m3)[1] + coef(m3)[2]*input$newX
+    plot(dataset[,input$X], dataset[,input$Y], 
+         ylab = input$Y,
+         xlab = input$X,
+         main = paste("Relationship between", input$Y, "and", input$X)
+    )
+    abline(m3,
+           col = "#e63946",
+           lwd = 3,
+           lty=2)
+    points(input$newX, pred.y, pch = 19, col = "#e63946", cex = 2)
+  })
+
+
+```
+Column {data-width=450} 
+-------------------------------------------------------------------
+### **BoxPlot**
+```{r fig.align='center', fig.width=6, fig.height=5}
+renderPlot({
+  ggplot(data=workDat(), aes(x=workDat()$X, y=workDat()[[input$Y]])) +
+    geom_boxplot(aes(fill = species), width = 0.3, outlier.shape = NA) +
+    geom_jitter(aes(color = species), alpha = 0.5, width = 0.2, height = 0) +
+    scale_fill_manual(values = c("darkorange","purple","cyan4")) +
+    scale_color_manual(values = c("darkorange","purple","cyan4")) +
+    labs(y = input$Y, x = "Species", fill = "Species") +
+    theme_minimal() +
+    theme(legend.position = "none", 
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5)) +
+    stat_summary(fun=mean, geom="point", shape=20, size=3, color="black")
+})
+
+
+```
+
+
+
+### **Interactive Data Table**
+```{r fig.align='center', fig.width=6, fig.height=5}
+renderDataTable({
+  DT::datatable(
+    workDat(),
+    rownames = TRUE, 
+    filter = "top",
+    extensions = c('Buttons', 'Scroller'),
+    options = list(
+      dom = 'Blfrtip',
+      buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+      deferRender = T,
+  scrollY = '400px',
+  scroller = TRUE))})
+```
